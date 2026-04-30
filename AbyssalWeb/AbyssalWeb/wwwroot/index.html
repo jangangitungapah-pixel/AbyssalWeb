@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AbyssalWeb</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --gold: rgba(255, 215, 0, 0.78);
+      --cyan: rgba(72, 232, 255, 0.9);
+      --blood: rgba(255, 60, 72, 0.92);
+      --glass: rgba(8, 13, 20, 0.56);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #050508;
+      color: #f7f5dc;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    #game-shell {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(31, 49, 52, 0.4), transparent 42%),
+        linear-gradient(180deg, #07070b, #030305 68%, #010102);
+    }
+
+    #gameCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: auto;
+      cursor: crosshair;
+    }
+
+    #crt-overlay {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      mix-blend-mode: multiply;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.28) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 90, 0.02), rgba(0, 90, 255, 0.04));
+      background-size: 100% 4px, 6px 100%;
+    }
+
+    #vignette {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      box-shadow: inset 0 0 160px 44px rgba(0, 0, 0, 0.9);
+    }
+
+    #hud {
+      position: absolute;
+      left: 20px;
+      top: 18px;
+      z-index: 6;
+      min-width: min(430px, calc(100vw - 40px));
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      border-radius: 8px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      box-shadow:
+        inset 0 0 20px rgba(255, 215, 0, 0.08),
+        0 0 24px rgba(255, 215, 0, 0.16),
+        0 8px 32px rgba(0, 0, 0, 0.34);
+    }
+
+    #title-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 14px rgba(255, 215, 0, 0.42);
+    }
+
+    #hero-name {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0;
+      color: #fff2a8;
+    }
+
+    #depth {
+      color: #9feaff;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 66px;
+      align-items: center;
+      gap: 10px;
+      margin: 7px 0;
+      font-size: 12px;
+      color: rgba(245, 242, 216, 0.88);
+    }
+
+    .bar-track {
+      height: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.38);
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.65);
+    }
+
+    .bar-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 120ms linear;
+      box-shadow: 0 0 18px currentColor;
+    }
+
+    #hp-fill {
+      color: var(--blood);
+      background: linear-gradient(90deg, #73101c, #ff3c48);
+    }
+
+    #mp-fill {
+      color: var(--cyan);
+      background: linear-gradient(90deg, #103f72, #4cf0ff);
+    }
+
+    #xp-fill {
+      color: var(--gold);
+      background: linear-gradient(90deg, #72570b, #ffd700);
+    }
+
+    #status-strip {
+      position: absolute;
+      right: 20px;
+      top: 18px;
+      z-index: 6;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid rgba(72, 232, 255, 0.42);
+      border-radius: 8px;
+      background: rgba(7, 11, 17, 0.52);
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 18px rgba(72, 232, 255, 0.08), 0 0 26px rgba(72, 232, 255, 0.12);
+      font-size: 12px;
+      color: #c9f8ff;
+    }
+
+    #center-message {
+      position: absolute;
+      left: 50%;
+      bottom: 26px;
+      z-index: 6;
+      transform: translateX(-50%);
+      width: min(620px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 8px;
+      background: rgba(9, 10, 15, 0.58);
+      backdrop-filter: blur(10px);
+      color: rgba(255, 247, 199, 0.92);
+      text-align: center;
+      font-size: 13px;
+      box-shadow: inset 0 0 18px rgba(255, 215, 0, 0.07), 0 0 24px rgba(0, 0, 0, 0.35);
+    }
+
+    @media (max-width: 720px) {
+      #hud {
+        left: 10px;
+        top: 10px;
+        padding: 10px;
+      }
+
+      #status-strip {
+        top: auto;
+        right: 10px;
+        bottom: 86px;
+      }
+
+      #center-message {
+        bottom: 14px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-shell">
+    <canvas id="gameCanvas" aria-label="AbyssalWeb 2.5D Action RPG Canvas"></canvas>
+    <section id="hud" aria-label="Status karakter">
+      <div id="title-row">
+        <div id="hero-name">AbyssalWeb Arcanist</div>
+        <div id="depth">Depth 1</div>
+      </div>
+      <div class="bar-row">
+        <span>HP</span>
+        <div class="bar-track"><div id="hp-fill" class="bar-fill"></div></div>
+        <span id="hp-text">0 / 0</span>
+      </div>
+      <div class="bar-row">
+        <span>MP</span>
+        <div class="bar-track"><div id="mp-fill" class="bar-fill"></div></div>
+        <span id="mp-text">0 / 0</span>
+      </div>
+      <div class="bar-row">
+        <span>XP</span>
+        <div class="bar-track"><div id="xp-fill" class="bar-fill"></div></div>
+        <span id="xp-text">0 / 0</span>
+      </div>
+    </section>
+    <aside id="status-strip">
+      <span id="level-text">LV 1</span>
+      <span id="atk-text">ATK 0</span>
+      <span id="monster-text">0 HOSTILES</span>
+    </aside>
+    <div id="center-message">WASD bergerak. Mouse membidik. Klik kiri menembakkan proyektil. F fullscreen.</div>
+    <div id="crt-overlay"></div>
+    <div id="vignette"></div>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
