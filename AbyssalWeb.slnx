@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AbyssalWeb/AbyssalWeb.Client/AbyssalWeb.Client.csproj" />
+  <Project Path="AbyssalWeb/AbyssalWeb/AbyssalWeb.csproj" />
+</Solution>
